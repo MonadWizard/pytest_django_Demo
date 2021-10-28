@@ -12,8 +12,8 @@ pytestmark = pytest.mark.django_db
 
 # --------------Test Get Companies--------------
 
-
 # pytest-django have predefine ficture called client
+# @pytest.mark.django_db
 def test_zero_companies_should_return_empty_list(client) -> None:
     response = client.get(path=companies_url)
     assert response.status_code == 200
