@@ -1,5 +1,7 @@
 import json
+# use any of this
 from unittest import TestCase
+# from django.test import TestCase
 
 import pytest
 from django.test import Client
@@ -109,4 +111,3 @@ class TestPostCompanies(BasicCompanyAPITestCase):
     @pytest.mark.skip
     def test_should_be_skipped(self) -> None:
         assert 1 == 2
-

@@ -1,28 +1,28 @@
 import json
-from django.test import TestCase
-
 import pytest
-from django.test import Client
 from django.urls import reverse
 
 from companies.models import Company
 
 companies_url = reverse("companies-list")
 
+# reduse decorator duplication by define pytestmark
+# pytestmark = [pytest.mark.django_db, pytest.mark.xfail , @pytest.mark.skip]
+pytestmark = pytest.mark.django_db
 
 # --------------Test Get Companies--------------
 
 
 # pytest-django have predefine ficture called client
-@pytest.mark.django_db
 def test_zero_companies_should_return_empty_list(client) -> None:
     response = client.get(path=companies_url)
     assert response.status_code == 200
     assert json.loads(response.content) == []
 
+
 #     run by : pytest -v
 
-@pytest.mark.django_db
+
 def test_one_company_exists_should_success(client) -> None:
     test_company = Company.objects.create(name="Amazon")
     response = client.get(path=companies_url)
@@ -33,31 +33,34 @@ def test_one_company_exists_should_success(client) -> None:
     assert response_content.get("name") == test_company.name
     assert response_content.get("status") == "Hiring"
     assert response_content.get("application_link") == ""
-    assert response_content.get("notes")== ""
+    assert response_content.get("notes") == ""
     # delete test company to test database
-    test_company.delete()
+    # test_company.delete()   # pytest-django run by creating virtual database so no need this trangation
 
 
 #     run by : pytest -v -s
 
 # --------------Test Post Companies--------------
 
-@pytest.mark.django_db
+
 def test_create_company_without_arguments_should_fail(client) -> None:
     response = client.post(path=companies_url)
     assert response.status_code == 400
     assert json.loads(response.content) == {"name": ["This field is required."]}
 
+
 #     run by : pytest -v -s
 
-@pytest.mark.django_db
+
 def test_create_existing_company_should_fail(client) -> None:
     Company.objects.create(name="Monad")
     response = client.post(path=companies_url, data={"name": "Monad"})
     assert response.status_code == 400
-    assert json.loads(response.content) == {"name": ["company with this name already exists."]}
+    assert json.loads(response.content) == {
+        "name": ["company with this name already exists."]
+    }
 
-@pytest.mark.django_db
+
 def test_create_company_with_only_name_all_field_should_default(client) -> None:
     response = client.post(path=companies_url, data={"name": "Monad"})
     assert response.status_code == 201
@@ -68,7 +71,7 @@ def test_create_company_with_only_name_all_field_should_default(client) -> None:
     assert response_content.get("application_link") == ""
     assert response_content.get("notes") == ""
 
-@pytest.mark.django_db
+
 def test_create_company_with_layoffs_should_success(client) -> None:
     response = client.post(
         path=companies_url, data={"name": "Monad", "status": "Layoffs"}
@@ -78,9 +81,12 @@ def test_create_company_with_layoffs_should_success(client) -> None:
     # print(response.content)
     assert response_content.get("name") == "Monad"
     assert response_content.get("status") == "Layoffs"
-@pytest.mark.django_db
+
+
 def test_create_company_with_wrong_status_should_fail(client) -> None:
-    response = client.post(path=companies_url, data={"name": "Monad", "status": "WrongStatus"})
+    response = client.post(
+        path=companies_url, data={"name": "Monad", "status": "WrongStatus"}
+    )
     assert response.status_code == 400
     response_content = json.loads(response.content)
     print(response.content)
@@ -88,9 +94,11 @@ def test_create_company_with_wrong_status_should_fail(client) -> None:
     assert "is not a valid choice" in str(response.content)
     # assertIn works for all type of collections
 
+
 @pytest.mark.xfail
 def test_should_be_ok_if_fails() -> None:
     assert 1 == 2
+
 
 @pytest.mark.skip
 def test_should_be_skipped() -> None:
@@ -98,78 +106,11 @@ def test_should_be_skipped() -> None:
 
 
 #   use --durations=N to see how much time it take for all run by : pytest -v -s --duration=0
-
-
-# companies_url = reverse("companies-list")
-# pytestmark = pytest.mark.django_db
-
-
-# --------------Test Get Companies--------------
-# def test_zero_companies_should_return_empty_list(client) -> None:
-#     response = client.get(companies_url)
-#     assert response.status_code == 200
-#     assert json.loads(response.content) == []
-
-
-# def test_one_company_exists_should_succeed(client, amazon) -> None:
-#     response = client.get(companies_url)
-#     response_content = json.loads(response.content)[0]
-#     assert response.status_code == 200
-#     assert response_content.get("name") == amazon.name
-#     assert response_content.get("status") == "Hiring"
-#     assert response_content.get("application_link") == ""
-#     assert response_content.get("notes") == ""
-
-
-# --------------Test Post Companies--------------
-
-#
-# def test_create_company_without_arguments_should_fail(client) -> None:
-#     response = client.post(path=companies_url)
-#     assert response.status_code == 400
-#     assert json.loads(response.content) == {"name": ["This field is required."]}
-#
-#
-# def test_create_existing_company_should_fail(client) -> None:
-#     Company.objects.create(name="apple")
-#     response = client.post(path=companies_url, data={"name": "apple"})
-#     assert response.status_code == 400
-#     assert json.loads(response.content) == {
-#         "name": ["company with this name already exists."]
-#     }
-#
-#
-# def test_create_company_with_only_name_all_fields_should_be_default(client) -> None:
-#     response = client.post(path=companies_url, data={"name": "test company name"})
-#     assert response.status_code == 201
-#     response_content = response.json()
-#     assert response_content.get("name") == "test company name"
-#     assert response_content.get("status") == "Hiring"
-#     assert response_content.get("application_link") == ""
-#     assert response_content.get("notes") == ""
-#
-#
-# def test_create_company_with_layoffs_status_should_succeed(client) -> None:
-#     response = client.post(
-#         path=companies_url,
-#         data={"name": "test company name", "status": "Layoffs"},
-#     )
-#     assert response.status_code == 201
-#     response_content = json.loads(response.content)
-#     assert response_content.get("status") == "Layoffs"
-#
-#
-# def test_create_company_with_wrong_status_should_fail(client) -> None:
-#     response = client.post(
-#         path=companies_url,
-#         data={"name": "test company name", "status": "WrongStatus"},
-#     )
-#     assert response.status_code == 400
-#     assert "WrongStatus" in str(response.content)
-#     assert "is not a valid choice" in str(response.content)
+# for run specific file with pytest by : pytest companies/tests/test_api_pyTest.py
 
 
 # _______________raise exception________________________
+
 
 def raise_covid19_exception() -> None:
     raise ValueError("CoronaVirus Exception")
