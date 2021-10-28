@@ -26,7 +26,7 @@ class BasicCompanyAPITestCase(TestCase):
 
 class TestGetCompanies(BasicCompanyAPITestCase):
     def test_zero_companies_should_return_empty_list(self) -> None:
-        response = self.client.get(self.companies_url)
+        response = self.client.get(path=self.companies_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), [])
 
@@ -34,7 +34,7 @@ class TestGetCompanies(BasicCompanyAPITestCase):
 
     def test_one_company_exists_should_success(self) -> None:
         test_company = Company.objects.create(name="Amazon")
-        response = self.client.get(self.companies_url)
+        response = self.client.get(path=self.companies_url)
         print(response.content)
         response_content = json.loads(response.content)[0]
         self.assertEqual(response.status_code, 200)
@@ -54,7 +54,7 @@ class TestGetCompanies(BasicCompanyAPITestCase):
 
 class TestPostCompanies(BasicCompanyAPITestCase):
     def test_create_company_without_arguments_should_fail(self) -> None:
-        response = self.client.post(self.companies_url)
+        response = self.client.post(path=self.companies_url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             json.loads(response.content), {"name": ["This field is required."]}
@@ -64,7 +64,7 @@ class TestPostCompanies(BasicCompanyAPITestCase):
 
     def test_create_existing_company_should_fail(self) -> None:
         Company.objects.create(name="Monad")
-        response = self.client.post(self.companies_url, data={"name": "Monad"})
+        response = self.client.post(path=self.companies_url, data={"name": "Monad"})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             json.loads(response.content),
@@ -72,7 +72,7 @@ class TestPostCompanies(BasicCompanyAPITestCase):
         )
 
     def test_create_company_with_only_name_all_field_should_default(self) -> None:
-        response = self.client.post(self.companies_url, data={"name": "Monad"})
+        response = self.client.post(path=self.companies_url, data={"name": "Monad"})
         self.assertEqual(response.status_code, 201)
         response_content = json.loads(response.content)
         # print(response.content)
@@ -83,7 +83,7 @@ class TestPostCompanies(BasicCompanyAPITestCase):
 
     def test_create_company_with_layoffs_should_success(self) -> None:
         response = self.client.post(
-            self.companies_url, data={"name": "Monad", "status": "Layoffs"}
+            path=self.companies_url, data={"name": "Monad", "status": "Layoffs"}
         )
         self.assertEqual(response.status_code, 201)
         response_content = json.loads(response.content)
@@ -93,7 +93,7 @@ class TestPostCompanies(BasicCompanyAPITestCase):
 
     def test_create_company_with_wrong_status_should_fail(self) -> None:
         response = self.client.post(
-            self.companies_url, data={"name": "Monad", "status": "WrongStatus"}
+            path=self.companies_url, data={"name": "Monad", "status": "WrongStatus"}
         )
         self.assertEqual(response.status_code, 400)
         response_content = json.loads(response.content)
